@@ -1,71 +1,70 @@
-import { useEffect, useState } from "react"
-import { TodoContext } from "./TodoContext"
+import { useEffect, useState } from "react";
+import { TodoContext } from "./TodoContext";
+import uuid from "react-uuid";
 
 export const TodoProvider = ({ children }) => {
+  const savedTodos = localStorage.getItem("todos");
+  const [showDialog, setShowDialog] = useState(false);
 
-    const savedTodos = localStorage.getItem('todos')
-    const [showDialog, setShowDialog] = useState(false)
+  const [todos, setTodos] = useState(savedTodos ? JSON.parse(savedTodos) : []);
 
-    const [todos, setTodos] = useState(savedTodos ? JSON.parse(savedTodos) : [])
+  const [selectedTodo, setSelectedTodo] = useState(null);
 
-    const [selectedTodo, setSelectedTodo] = useState(null)
+  useEffect(() => {
+    localStorage.setItem("todos", JSON.stringify(todos));
+  }, [todos]);
 
-    useEffect(() => {
-        localStorage.setItem('todos', JSON.stringify(todos))
-    }, [todos])
+  const upsertTodo = (formData) => {
+    if (selectedTodo) {
+      setTodos((oldState) =>
+        oldState.map((item) =>
+          item.id === selectedTodo.id
+            ? { ...item, description: formData.get("description") }
+            : item,
+        ),
+      );
+    } else
+      setTodos((oldState) => {
+        const newTodo = {
+          id: uuid(),
+          description: formData.get("description"),
+          createdAt: new Date().toISOString(),
+          completed: false,
+        };
+        return [...oldState, newTodo];
+      });
+    closeTodoFormModal();
+  };
 
-    const upsertTodo = (formData) => {
-        if (selectedTodo) {
-            setTodos(oldState =>
-                oldState.map(item =>
-                    item.id === selectedTodo.id
-                        ? { ...item, description: formData.get('description') }
-                        : item
-                )
-            )
-        } else (
-            setTodos(oldState => {
-                const newTodo = {
-                    id: oldState.length + 1,
-                    description: formData.get('description'),
-                    createdAt: new Date().toISOString(),
-                    completed: false
-                }
-                return [...oldState, newTodo]
-            })
-        )
-        closeTodoFormModal()
-    }
+  const removeTodo = (todo) => {
+    setTodos((oldState) => oldState.filter((t) => t.id != todo.id));
+  };
 
-    const removeTodo = (todo) => {
-        setTodos(oldState => oldState.filter(t => t.id != todo.id))
-    }
+  const toggleItemCompleted = (todo) => {
+    setTodos((oldState) =>
+      oldState.map((item) =>
+        item.id === todo.id ? { ...item, completed: !item.completed } : item,
+      ),
+    );
+  };
 
-    const toggleItemCompleted = (todo) => {
-        setTodos(oldState =>
-            oldState.map(item =>
-                item.id === todo.id
-                    ? { ...item, completed: !item.completed }
-                    : item
-            )
-        )
-    }
+  const openTodoFormModal = () => {
+    setShowDialog(true);
+  };
 
-    const openTodoFormModal = () => {
-        setShowDialog(true)
-    }
+  const closeTodoFormModal = () => {
+    setShowDialog(false);
+    setSelectedTodo(null);
+  };
 
-    const closeTodoFormModal = () => {
-        setShowDialog(false)
-        setSelectedTodo(null)
-    }
+  const selectTodoForEdit = (todo) => {
+    setSelectedTodo(todo);
+    openTodoFormModal();
+  };
 
-    const selectTodoForEdit = (todo) => {
-        setSelectedTodo(todo)
-        openTodoFormModal()
-    }
-
-    return <TodoContext value={{
+  return (
+    <TodoContext
+      value={{
         todos,
         upsertTodo,
         removeTodo,
@@ -74,8 +73,10 @@ export const TodoProvider = ({ children }) => {
         closeTodoFormModal,
         isModalOpen: showDialog,
         selectTodoForEdit,
-        selectedTodo
-    }}>
-        {children}
+        selectedTodo,
+      }}
+    >
+      {children}
     </TodoContext>
-}
+  );
+};
