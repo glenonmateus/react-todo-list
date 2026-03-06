@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { TodoContext } from "./TodoContext";
-import uuid from "react-uuid";
+import { v4 as uuidv4 } from "uuid";
 
 export const TodoProvider = ({ children }) => {
   const savedTodos = localStorage.getItem("todos");
@@ -26,7 +26,7 @@ export const TodoProvider = ({ children }) => {
     } else
       setTodos((oldState) => {
         const newTodo = {
-          id: uuid(),
+          id: uuidv4(),
           description: formData.get("description"),
           createdAt: new Date().toISOString(),
           completed: false,
