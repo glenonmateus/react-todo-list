@@ -16,24 +16,31 @@ export const TodoProvider = ({ children }) => {
 
   const upsertTodo = (formData) => {
     if (selectedTodo) {
-      setTodos((oldState) =>
-        oldState.map((item) =>
-          item.id === selectedTodo.id
-            ? { ...item, description: formData.get("description") }
-            : item,
-        ),
-      );
-    } else
-      setTodos((oldState) => {
-        const newTodo = {
-          id: uuidv4(),
-          description: formData.get("description"),
-          createdAt: new Date().toISOString(),
-          completed: false,
-        };
-        return [...oldState, newTodo];
-      });
+      editTodo(formData.get("description"));
+    } else {
+      const newTodo = {
+        id: uuidv4(),
+        description: formData.get("description"),
+        createdAt: new Date().toISOString(),
+        completed: false,
+      };
+      addTodo(newTodo);
+    }
     closeTodoFormModal();
+  };
+
+  const editTodo = (description) => {
+    setTodos((oldState) =>
+      oldState.map((item) =>
+        item.id === selectedTodo.id
+          ? { ...item, description: description }
+          : item,
+      ),
+    );
+  };
+
+  const addTodo = (todo) => {
+    setTodos([...todos, todo]);
   };
 
   const removeTodo = (todo) => {
